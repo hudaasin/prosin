@@ -31,7 +31,7 @@ source ./yarsin startapp core user user_profile
 <div dir="ltr" lang="en" style="text-align: left;" contenteditable="true">
 
 ```bash
-source ./yarsin startapp backup data
+source ./yarsin backup data
 ```
 
 </div>
@@ -72,7 +72,7 @@ source ./yarsin startapp backup data
 
 سپس، برای [اِجْریدَن](https://fa.wiktionary.org/wiki/اجریدن) (اجرا کردن) پروژه در [اِجرالان](https://fa.wiktionary.org/wiki/اجرالان) [وُسْعُش](https://fa.wiktionary.org/wiki/وسعش) (محیط توسعه) یا [بَهْرِش](https://fa.wiktionary.org/wiki/بهرش) (بهره‌بری) گام‌های زیر را [بِپِیْمو](https://fa.wiktionary.org/wiki/پیمودن) (دنبال کن):
 
-1. [جاگُزیدن](https://fa.wiktionary.org/wiki/جاگزیدن) (جایگزین کردن) [غِیْرپِذیرهای](https://fa.wiktionary.org/wiki/غیرپذیر) [اِجرالانی](https://fa.wiktionary.org/wiki/اجرالان) (متغیرهای محلی) با اطلاع‌های حساس در <span dir="ltr">`./config/settings/base.py`</span>، برای افزایش امنیت و [عَطْفْپِذیری](https://fa.wiktionary.org/wiki/عطفپذیری) (انعطافپذیری):
+1. [جاگُزیدن](https://fa.wiktionary.org/wiki/جاگزیدن) (جایگزین کردن) اطلاع‌های حساس در <span dir="ltr">`./config/settings/base.py`</span> با [غِیْرپِذیرهای](https://fa.wiktionary.org/wiki/غیرپذیر) [اِجرالانی](https://fa.wiktionary.org/wiki/اجرالان) (متغیرهای محیطی)، برای افزایش امنیت و [عَطْفْپِذیری](https://fa.wiktionary.org/wiki/عطفپذیری) (انعطافپذیری):
 
    <div dir="ltr" lang="en" style="text-align: left;" contenteditable="true">
 
@@ -89,8 +89,6 @@ source ./yarsin startapp backup data
    # ...
    DATABASES = {"default": env.db("DATABASE_URL")}
    # ...
-   # ADMIN_URL is used to specify the subdomain path for accessing the Django admin interface.
-   ADMIN_URL = "dashsin/"
    ```
 
    </div>
@@ -245,7 +243,7 @@ source ./yarsin startapp backup data
 
       </div>
 
-   2. و [پِیکِریدن](https://fa.wiktionary.org/wiki/پیکریدن) `celery` همانند زیر در فایل <span dir="ltr">`./config/settings/base.py`</span>:
+   2. و [پِیکِریدن](https://fa.wiktionary.org/wiki/پیکریدن) `celery` در فایل <span dir="ltr">`./config/settings/base.py`</span> همانند زیر:
 
       <div dir="ltr" lang="en" style="text-align: left;" contenteditable="true">
 
@@ -351,7 +349,7 @@ source ./yarsin startapp core user
 
 **بِوَجْه:** این درمودر همه دستورهای معتبر `django-admin` برقرار است!
 
-### دستورهای مهم `yarsin`
+### دستورهای نگهداری
 
 - [مانوزْدَن](https://fa.wiktionary.org/wiki/مانوزدن) پایگاه‌داده (پشتیبان‌گیری در سطح پایگاه‌داده):
 
@@ -389,6 +387,44 @@ source ./yarsin startapp core user
 
   ```bash
   source ./yarsin restore dbms
+  ```
+
+  </div>
+
+### دستورهای [نیکوپْتَن](https://fa.wiktionary.org/wiki/نیکوپتن) (استانداردسازی) کدها
+
+- [رَسْتیدن](https://fa.wiktionary.org/wiki/رستیدن) (ترتیب دادن و دسته‌بندی کردن) `import` ها:
+
+  <div dir="ltr" lang="en" style="text-align: left;" contenteditable="true">
+
+  ```bash
+  source ./yarsin isort
+  source ./yarsin isort check
+  source ./yarsin isort diff
+  ```
+
+  </div>
+
+- [برِّسیدن](https://fa.wiktionary.org/wiki/برسیدن) (بررسی کردن) کیفیت کدها:
+
+  <div dir="ltr" lang="en" style="text-align: left;" contenteditable="true">
+
+  ```bash
+  source ./yarsin flake8
+  source ./yarsin flake8 all
+  source ./yarsin flake8 safe
+  ```
+
+  </div>
+
+- [ریشِکْلیدن](https://fa.wiktionary.org/wiki/ریشکلیدن) (قالب‌بندی مجدد) ساختار کدها:
+
+  <div dir="ltr" lang="en" style="text-align: left;" contenteditable="true">
+
+  ```bash
+  source ./yarsin black
+  source ./yarsin black check
+  source ./yarsin black diff
   ```
 
   </div>
