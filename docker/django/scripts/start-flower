@@ -1,0 +1,31 @@
+#!/usr/bin/env sh
+
+# Exit script immediately if a command fails
+set -o errexit
+# Exit script if it tries to use unset variables
+set -o nounset
+
+# Define the project and workdir directory
+workdir="$(cd "$(dirname "$0")" && pwd)" # Directory of the script
+project_dir=$(realpath "$workdir")       # Project directory
+
+# Source necessary files
+source "${workdir}/sources/_constants.sh" # Constants file
+source "${workdir}/sources/_messages.sh"  # Messages file
+source "${workdir}/sources/_utils.sh"     # Utilities file
+
+# Define a function to check if celery workers are ready
+worker_ready() {
+    celery -A config inspect ping # Check if Celery workers are ready by pinging them
+}
+
+# Keep checking until celery workers are ready
+until worker_ready; do
+    message_bold "Waiting for Celery workers to become available..."
+    sleep 1
+done
+
+message_success "Celery workers are now available and ready to process tasks."
+
+# Start Celery Flower using the specified settings
+celery -A config flower --broker="${CELERY_BROKER_URL}" --basic_auth="${CELERY_FLOWER_USER}:${CELERY_FLOWER_PASSWORD}"

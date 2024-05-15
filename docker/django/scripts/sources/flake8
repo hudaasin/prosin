@@ -1,0 +1,25 @@
+#!/usr/bin/env sh
+
+if [[ $# -eq 0 ]]; then
+    # Run the Flake8 linter
+    flake8 --count --statistics "${WORK_DIRECTORY}"
+    exit 0
+fi
+
+function_name=$1
+
+case $function_name in
+"all")
+    # Run Flake8 with all checks enabled
+    flake8 --count --statistics --disable-noqa "${WORK_DIRECTORY}"
+    ;;
+"safe")
+    # Run Flake8 with exit-zero option for safe checks
+    flake8 --count --statistics --exit-zero "${WORK_DIRECTORY}"
+    ;;
+*)
+    # Display error message for invalid function name and exit with error status
+    message_error "Invalid function name. Available functions: all, safe"
+    exit 1
+    ;;
+esac

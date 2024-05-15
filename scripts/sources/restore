@@ -1,0 +1,20 @@
+#!/usr/bin/env bash
+
+restore() {
+    local fname="$1"
+
+    local was_ran=false
+
+    if [[ "$fname" = "dbms" ]] && [[ "$(check_service_status db)" -eq 0 ]]; then
+        was_ran=true
+        docker compose -f ./compose.yml stop db
+    fi
+
+    docker compose -f ./compose.yml run --rm db bash -c "yarsin restore ${fname}"
+
+    if $was_ran; then
+        docker compose -f ./compose.yml start db
+    fi
+}
+
+restore "$@"

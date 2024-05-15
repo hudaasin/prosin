@@ -1,0 +1,27 @@
+#!/usr/bin/env bash
+
+# Define the project and workdir directory
+workdir="$(cd "$(dirname "$0")" && pwd)" # Get the directory of the script
+project_dir=$(realpath "$workdir")       # Get the project directory by going up zero level
+
+# Source the necessary files
+source "${workdir}/sources/_constants.sh" # Constants file
+source "${workdir}/sources/_messages.sh"  # Messages file
+source "${workdir}/sources/_utils.sh"     # Utilities file
+
+get_or_create_user() {
+    uid=$1
+    username=$(getent passwd "$uid" | cut -d: -f1)
+    
+    if [ -z "$username" ]; then
+        adduser -D -u "$uid" prosin
+        username=$(getent passwd "$uid" | cut -d: -f1)
+    fi
+    
+    echo "$username"
+}
+
+username=$(get_or_create_user $1)
+shift
+
+su -c "$*" $username

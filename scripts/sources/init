@@ -1,0 +1,46 @@
+#!/usr/bin/env bash
+
+# This script initializes a new project by creating project settings files.
+# It takes an optional project name as an argument, and if not provided, it uses the default project name defined in the environment variable PROJECT_NAME.
+# The script sets options to exit immediately if a command fails, to exit when a command in a pipeline fails, and to exit if it tries to use unset variables.
+
+# Set the script to exit immediately if a command exits with a non-zero status
+set -o errexit
+# Set the script to exit when a command in a pipeline fails
+set -o pipefail
+# Set the script to exit if it tries to use unset variables
+set -o nounset
+
+copy_env_files() {
+    local directory="$1"
+    local new_file=""
+
+    for file in $directory/.*.env.example; do
+        if [ -e "$file" ]; then
+            new_file="${file%.example}"
+            cp "$file" "$new_file"
+            message_success "Copied $file to $new_file"
+        fi
+    done
+}
+
+init() {
+    local project_name="${1:-$PROJECT_NAME}"
+
+    # If project name is not provided, determine the default name
+    if [[ ! -n $project_name ]]; then
+        project_name="${PROJECT_NAME}"
+    fi
+
+    copy_env_files "${workdir}/envs"
+
+    # Start a new project using 'yarsin' with the specified project name
+    docker compose -f ./compose.yml run --rm --no-deps api sh -c "DJANGO_SETTINGS_MODULE=""; run_as $(id -u) yarsin startproject ${project_name}"
+
+    # Create necessary directories and files for project settings
+    mkdir -p "${workdir}/${project_name}/settings" &&
+        touch "${workdir}/${project_name}/settings/__init__.py" "${workdir}/${project_name}/settings/development.py" "${workdir}/${project_name}/settings/production.py" &&
+        mv ${project_name}/settings.py ${workdir}/${project_name}/settings/base.py
+}
+
+init "$@"

@@ -1,0 +1,27 @@
+#!/usr/bin/env bash
+
+# Define the project and workdir directory
+workdir="$(cd "$(dirname "$0")" && pwd)" # Get the directory of the script
+project_dir=$(realpath "$workdir")       # Get the project directory by going up zero level
+
+# Source the necessary files
+source "${workdir}/sources/_constants.sh"   # Constants file
+source "${workdir}/sources/_messages.sh"    # Messages file
+source "${workdir}/sources/_utils.sh"       # Utilities file
+
+# Check for the function name argument
+if [[ $# -eq 0 ]]; then
+    message_error "Usage: $0 <function_name> [arguments]" # Display usage error message
+    exit 1
+fi
+
+# Call the specified function with the provided arguments
+source_path="${workdir}/sources/${1}"
+
+if [ -f "${source_path}" ]; then
+    shift
+    source "${source_path}" "$@"
+else
+    message_error "The requested functionality was not found. Please check your input and try again."
+    exit 1
+fi

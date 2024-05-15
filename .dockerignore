@@ -1,0 +1,20 @@
+# Ignore common version control folders
+.git
+.svn
+.vagrant
+.idea
+.vscode
+.devcontainer
+
+# Ignore Python cache and temporary files
+__pycache__
+*.pyc
+
+# Ignore development and local environment files
+*.env
+*.log
+*.sql
+
+# Ignore system and hidden files
+.DS_Store
+Thumbs.db

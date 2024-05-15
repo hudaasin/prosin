@@ -1,0 +1,25 @@
+#!/usr/bin/env sh
+
+if [[ $# -eq 0 ]]; then
+    # Run Black code formatter, excluding migrations
+    black --exclude=migrations "${WORK_DIRECTORY}"
+    exit 0
+fi
+
+function_name=$1
+
+case $function_name in
+"check")
+    # Check the code formatting using Black
+    black --check --exclude=migrations "${WORK_DIRECTORY}"
+    ;;
+"diff")
+    # Display the differences in code formatting that would be made by Black
+    black --diff --exclude=migrations "${WORK_DIRECTORY}"
+    ;;
+*)
+    # Display error message for invalid function name and exit with error status
+    message_error "Invalid function name. Available functions: check, diff"
+    exit 1
+    ;;
+esac

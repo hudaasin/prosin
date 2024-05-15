@@ -1,0 +1,48 @@
+#!/usr/bin/env bash
+
+# Function to list DBMS backup files
+dbms_backups() {
+    message_info "Here are your DBMS backups:"
+    list_backups "*_${DBMS_BACKUP_FILE_SUFFIX}.tar.gz"
+}
+
+# Function to list database backup files
+data_backups() {
+    message_info "Here are your database backups:"
+    list_backups "$1*_${DATA_BACKUP_FILE_SUFFIX}.sql.gz" "$DATA_BACKUP_DIR"
+}
+
+# Function to list all backup files
+backups() {
+    dbms_backups
+    message_newline
+    data_backups
+}
+
+# Check for the function name argument
+if [[ $# -eq 0 ]]; then
+    message_error "Usage: $0 <function_name> [arguments]"
+    exit 1
+fi
+
+function_name=$1
+
+# Call the specified function with the provided arguments
+case $function_name in
+"dbms")
+    shift
+    dbms_backups "$@"
+    ;;
+"data")
+    shift
+    data_backups "$@"
+    ;;
+"all")
+    shift
+    backups "$@"
+    ;;
+*)
+    message_error "Invalid operator name. Available operators: dbms, data, all"
+    exit 1
+    ;;
+esac

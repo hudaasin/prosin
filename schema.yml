@@ -1,0 +1,7 @@
+openapi: 3.0.3
+info:
+  title: Prosin
+  version: 1.0.0
+  description: A Django project that has been set up and is ready to use
+paths: {}
+components: {}

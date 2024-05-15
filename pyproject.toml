@@ -1,0 +1,47 @@
+[tool.flake8]
+max-line-length = 120
+extend-ignore = "E203, W503, F401"
+exclude = [
+    ".git",
+    "__pycache__",
+    "docs",
+    "build",
+    "dist",
+    "venv",
+    "env",
+    ".venv",
+    "migrations",
+]
+
+# Define custom Flake8 rules specific to your project if needed
+# custom_rules = "path/to/custom_rules.py"
+
+[tool.isort]
+skip = "env/"
+profile = "black"
+line_length = 88
+multi_line_output = 3
+include_trailing_comma = true
+force_grid_wrap = 0
+use_parentheses = true
+known_third_party = ["django", "flask", "requests"]
+known_first_party = "prosin"
+
+[tool.pylint."MESSAGES CONTROL"]
+max-line-length = 120
+
+# Set up pre-commit hooks to run Flake8 and Isort checks before each commit
+# [tool.pre-commit]
+# hooks = ["flake8", "isort"]
+
+# Configure editor integration to run Flake8 and Isort checks on file save
+# [tool.editor]
+# lint_on_save = true
+
+# Integrate Flake8 and Isort checks into your continuous integration pipeline
+# [tool.ci]
+# pipeline = ["flake8", "isort"]
+
+# Add documentation to describe the purpose and configuration options
+# [tool.documentation]
+# description = "Configuration for Flake8 and Isort in a Django project"

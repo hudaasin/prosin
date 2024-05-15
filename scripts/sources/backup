@@ -1,0 +1,22 @@
+#!/usr/bin/env bash
+
+backup() {
+    local fname="$1"
+
+    if [[ "$fname" = "dbms" ]]; then
+        if [[ "$(check_service_status db)" -eq 0 ]]; then
+            local was_ran=true
+            docker compose -f ./compose.yml stop db
+        fi
+        local backup_name="postgres___$(date +'%Y_%m_%d__%H_%M_%S')___dbms.tar.gz"
+        docker compose -f ./compose.yml run --rm db bash -c "yarsin backup ${fname} -n ${backup_name} && chown $(id -u):$(id -u) /backups/${backup_name}"
+    else
+        docker compose -f ./compose.yml run --rm db bash -c "run_as $(id -u) yarsin backup ${fname}"
+    fi
+
+    if $was_ran; then
+        docker compose -f ./compose.yml start db
+    fi
+}
+
+backup "$@"

@@ -1,0 +1,27 @@
+#!/usr/bin/env sh
+
+# This script runs a Django server after applying migrations and collecting static files.
+# It checks for the presence of the DJANGO_SETTINGS_MODULE file before starting the server.
+
+# Function: runserver
+# Description: Runs a Django server after applying migrations and collecting static files.
+#              Checks for the presence of the DJANGO_SETTINGS_MODULE file before starting the server.
+runserver() {
+    settings_module_path="${WORK_DIRECTORY}/$(convert_dotted_path_to_slash "$DJANGO_SETTINGS_MODULE")"
+
+    if [ -f "${settings_module_path}.py" ]; then
+        # Apply any pending database migrations without asking for user input.
+        django-admin migrate --no-input
+        # Collect static files from all apps and copy them to the STATIC_ROOT directory.
+        django-admin collectstatic --no-input
+        # Start the Django development server to serve the application on all network interfaces on port ${SERVER_PORT}.
+        exec django-admin runserver 0.0.0.0:${SERVER_PORT}
+    else
+        error_message="The settings module file '${settings_module_path}' was not found. Please make sure the file exists before running this script."
+        message_error "$error_message"
+        exit 1
+    fi
+}
+
+wait_for_pg
+runserver "$@"

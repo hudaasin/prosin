@@ -1,0 +1,25 @@
+#!/usr/bin/env sh
+
+if [[ $# -eq 0 ]]; then
+    # Run isort import sorting tool, skipping 'env' and 'migrations' directories
+    isort "${WORK_DIRECTORY}" --skip env --skip migrations
+    exit 0
+fi
+
+function_name=$1
+
+case $function_name in
+"check")
+    # Check the import sorting using isort
+    isort "${WORK_DIRECTORY}" --check-only --skip env --skip migrations
+    ;;
+"diff")
+    # Display the differences in import sorting that would be made by isort
+    isort "${WORK_DIRECTORY}" --diff --skip env --skip migrations
+    ;;
+*)
+    # Display error message for invalid function name and exit with error status
+    message_error "Invalid function name. Available functions: check, diff"
+    exit 1
+    ;;
+esac

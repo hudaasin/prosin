@@ -1,0 +1,226 @@
+#!/usr/bin/env bash
+
+# Set the script to exit immediately if a command fails
+set -o errexit
+# Set the script to exit immediately in case of an error in a pipeline
+set -o pipefail
+# Treat unset variables as an error and exit immediately
+set -o nounset
+
+# Set the necessary environment variables for the database connection
+export PGHOST=${POSTGRES_HOST}         # The host where the PostgreSQL database is running
+export PGPORT=${POSTGRES_PORT}         # The port number for connecting to the PostgreSQL database
+export PGUSER=${POSTGRES_USER}         # The username for accessing the PostgreSQL database
+export PGPASSWORD=${POSTGRES_PASSWORD} # The password for the PostgreSQL database user
+export PGDATABASE=${POSTGRES_DB}       # The name of the default database to be used
+
+restore_pg() {
+    # Initialize variables
+    local backup_name=""
+
+    # Parse named arguments
+    while getopts "n:" opt; do
+        case ${opt} in
+        n) backup_name=${OPTARG} ;; # Set the backup_name from the argument
+        *)
+            message_error "Invalid option: ${opt}"
+            exit 1
+            ;;
+        esac
+    done
+
+    # Check if required arguments are provided
+    if [[ -z $backup_name ]]; then
+        message_error "Usage: $0 -n <backup name>"
+        exit 1
+    fi
+
+    # Construct the full path of the backup file
+    local backup_path="${DBMS_BACKUP_DIR}/${backup_name}"
+
+    # Check if the backup file exists
+    if [[ ! -f "${backup_path}" ]]; then
+        message_error "Backup file '${backup_name}' not found. Please check the 'yarsin backups data' output to verify the availability of the backup file and try running the restore process again."
+        exit 1
+    fi
+
+    # Check if the backup file has a *.tar.gz extension
+    if [[ ! "$backup_path" =~ \.tar\.gz$ ]]; then
+        message_error "Invalid backup file format. Please provide a '*.tar.gz' file."
+        exit 1
+    fi
+
+    # Start the restore process
+    message_success "Backup found. Initiating restoration from '${backup_path}'..."
+
+    # Remove existing data in the PostgreSQL data directory
+    rm -rf "${BACKUP_DESTINATION}"/* 2>/dev/null &
+    spinner "Removing existing data in the PostgreSQL data directory."
+
+    # Check the exit status of the rm command
+    if [[ $? -eq 0 ]]; then
+        message_success "Existing data in the PostgreSQL data directory have been removed."
+    else
+        message_error "Failed to remove existing data in the PostgreSQL data directory. Restore process aborted."
+        exit 1
+    fi
+
+    # Extract the backup file to the temporary directory
+    (tar -xzf "$backup_path" -C /) 2>/dev/null &
+    spinner "Extracting the backup..."
+
+    # Check the exit status of the tar command
+    if [[ $? -eq 0 ]]; then
+        message_success "Backup extraction successful."
+    else
+        message_error "Failed to extract the backup file to the temporary directory. Restore process aborted."
+        exit 1
+    fi
+}
+
+restore_db() {
+    # Initialize variables
+    local username=""
+    local password=""
+    local database_name=""
+    local backup_name=""
+
+    # Parse named arguments
+    while getopts "u:p:n:d" opt; do
+        case ${opt} in
+        u) username=${OPTARG} ;;      # Set the username from the argument
+        p) password=${OPTARG} ;;      # Set the password from the argument
+        d) database_name=${OPTARG} ;; # Set the database_name from the argument
+        n) backup_name=${OPTARG} ;;   # Set the backup_name from the argument
+        *)
+            message_error "Invalid option: ${opt}"
+            exit 1
+            ;;
+        esac
+    done
+
+    # Check if the backup_name argument is provided
+    if [[ -z $backup_name ]]; then
+        message_error "Usage: $0 -n <backup name>"
+        exit 1
+    fi
+
+    # Check if username and password are provided together or not
+    if [[ -z $username && -z $password ]]; then
+        username=$PGUSER
+        password=$PGPASSWORD
+    elif [[ -z $username || -z $password ]]; then
+        message_error "Usage: $0 -n <backup name> -u <username> -p <password>"
+        exit 1
+    fi
+
+    # Construct the full path of the backup file
+    local backup_path="${DATA_BACKUP_DIR}/${backup_name}"
+
+    # Check if the backup file exists
+    if [[ ! -f $backup_path ]]; then
+        message_error "Backup file does not exist."
+        exit 1
+    fi
+
+    # If database name is not provided, extract it from the backup name
+    if [[ -z $database_name ]]; then
+        if [[ $(get_file_name "$backup_path") =~ $DATA_BACKUP_PATTERN ]]; then
+            database_name="${BASH_REMATCH[1]}"
+        else
+            message_error "Database name not provided, and backup name pattern does not match for $backup_name"
+            exit 1
+        fi
+    fi
+
+    # Check if the username is 'postgres' and display an error message if true
+    if [[ "${username}" == "postgres" ]]; then
+        message_error "Restoring as 'postgres' user is not supported. Assign 'POSTGRES_USER' env with another one and try again."
+        exit 1
+    fi
+
+    # Start the restore process
+    message_success "Backup and database found. Starting restoration from '${backup_path}' to '${database_name}'."
+
+    # Drop the existing database
+    dropdb "${database_name}" 2>/dev/null &
+    spinner "Dropping the database..."
+
+    # Check the exit status of the dropdb command
+    if [[ $? -eq 0 ]]; then
+        message_success "Existing data in the PostgreSQL database have been removed."
+    else
+        message_error "Failed to remove existing data in the PostgreSQL database. Restore process aborted."
+        exit 1
+    fi
+
+    # Create a new database with the specified owner
+    createdb --owner="${username}" "${database_name}" 2>/dev/null &
+    spinner "Creating the database '${database_name}'"
+
+    # Check the exit status of the createdb command
+    if [[ $? -eq 0 ]]; then
+        message_success "Database '${database_name}' created successfully."
+    else
+        message_error "Failed to create the database '${database_name}'. Restore process aborted."
+        exit 1
+    fi
+
+    # Extract and apply the backup to the new database
+    (gunzip -c "${backup_path}" | psql "${database_name}" >/dev/null 2>&1) &
+    spinner "Applying the backup to the database '${database_name}'"
+
+    # Check the exit status of the psql command
+    if [[ $? -eq 0 ]]; then
+        message_success "Backup applied successfully to the database '${database_name}'."
+    else
+        message_error "Failed to apply the backup to the database '${database_name}'. Restore process aborted."
+        exit 1
+    fi
+
+    # Print a success message after the database is restored from the backup
+    message_success "Database '${database_name}' has been successfully restored from the backup '${backup_name}'."
+}
+
+# Check for the function name argument
+if [[ $# -eq 0 ]]; then
+    message_error "Usage: $0 <function_name> [arguments]"
+    exit 1
+fi
+
+function_name=$1
+
+# Call the specified function with the provided arguments
+case $function_name in
+"pg")
+    shift
+    restore_pg "$@"
+    ;;
+"db")
+    shift
+    restore_db "$@"
+    ;;
+"dbms")
+    shift
+    backup_name=""
+    message_welcome "Initiating the DBMS restoration process."
+    message_ask "Please select a DBMS backup from the available options below:"
+    list_backups "*_${DBMS_BACKUP_FILE_SUFFIX}.tar.gz"
+    read -r -p "  Enter the name of the DBMS backup you wish to restore:   " backup_name
+    restore_pg -n "${backup_name}" "$@"
+    ;;
+"data")
+    shift
+    db_name=""
+    backup_name=""
+    message_welcome "Initiating the database restoration process."
+    message_ask "Please choose a backup from the available options below:"
+    list_backups "*_${DATA_BACKUP_FILE_SUFFIX}.sql.gz"
+    read -r -p "  Enter the name of the backup you wish to restore:   " backup_name
+    restore_db -n "${backup_name}" "$@"
+    ;;
+*)
+    message_error "Invalid function name. Available functions: pg - PostgreSQL, db - Database, dbms - DBMS, data - Data."
+    exit 1
+    ;;
+esac

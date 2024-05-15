@@ -1,0 +1,8 @@
+#!/usr/bin/env bash
+
+backups() {
+    local fname="$1"
+    docker compose -f ./compose.yml run --rm db sh -c "yarsin backups ${fname}"
+}
+
+backups "$@"

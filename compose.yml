@@ -1,0 +1,151 @@
+services:
+  # Service responsible for running the Nginx reverse proxy server
+  web:
+    build:
+      context: ./docker/nginx
+      dockerfile: Dockerfile
+      target: development-run-stage
+    container_name: prosin_web
+    env_file:
+      - ./envs/.nginx.env
+    depends_on:
+      - api
+    restart: always
+    volumes:
+      - api_staticfiles:/assets/static
+      - api_mediafiles:/assets/media
+    networks:
+      - brgnet
+    ports:
+      - "8085:80" # Exposes port 8085 on the host machine and maps it to port 80 on the container.
+
+  # Service responsible for running the Django application server
+  api:
+    build:
+      context: .
+      dockerfile: ./docker/django/Dockerfile
+      target: development-run-stage
+      args:
+        - BUILD_ENVIRONMENT=development
+    container_name: prosin_api
+    environment:
+      - PROJECT_NAME=config
+      - WORK_DIRECTORY=/app
+      - APPS_DIRECTORY=/app/apps
+      - STATICFILES_DIRECTORY=/assets/static
+      - MEDIAFILES_DIRECTORY=/assets/media
+      - SERVER_PORT=8000
+    env_file:
+      - ./envs/.api.env
+      - ./envs/.db.env
+    command: "yarsin runserver"
+    depends_on:
+      - db
+      - ram-db
+      - task-queue
+    volumes:
+      - .:/app:z
+      - api_staticfiles:/assets/static
+      - api_mediafiles:/assets/media
+    networks:
+      - brgnet
+    expose:
+      - "8000" # Exposes port 8000 on the container.
+
+  # Service responsible for running Celery workers to process asynchronous tasks
+  task-queue:
+    build:
+      context: .
+      dockerfile: ./docker/django/Dockerfile
+      target: development-run-stage
+    container_name: prosin_task-queue
+    depends_on:
+      - db
+      - ram-db
+      - email
+    env_file:
+      - ./envs/.api.env
+      - ./envs/.db.env
+    command: "start-worker"
+    volumes:
+      - .:/app
+    networks:
+      - brgnet
+
+  # Service responsible for running the MailHog email testing tool
+  email:
+    image: mailhog/mailhog:v1.0.0
+    container_name: prosin_email
+    networks:
+      - brgnet
+    expose:
+      - "8025" # Exposes port 8025 on the container.
+
+  # Service responsible for running Flower, a web-based tool for monitoring and administrating Celery clusters
+  task-monitor:
+    build:
+      context: .
+      dockerfile: ./docker/django/Dockerfile
+      target: development-run-stage
+    container_name: prosin_task-monitor
+    depends_on:
+      - db
+      - ram-db
+    env_file:
+      - ./envs/.api.env
+      - ./envs/.db.env
+      - ./envs/.task-monitor.env
+    command: "start-flower"
+    volumes:
+      - task-monitor_data:/data
+    networks:
+      - brgnet
+    expose:
+      - "5555" # Exposes port 8025 on the container.
+
+  # Service for pgAdmin, a web-based administration tool for managing PostgreSQL databases
+  pgadmin:
+    image: dpage/pgadmin4
+    container_name: prosin_pgadmin
+    env_file:
+      - ./envs/.pgadmin.env
+    volumes:
+      - pgadmin_data:/var/lib/pgadmin
+    networks:
+      - brgnet
+    expose:
+      - "80" # Exposes port 80 on the container.
+
+  # Service responsible for running the Redis in-memory data structure store
+  ram-db:
+    image: redis:7-alpine
+    container_name: prosin_ram-db
+    networks:
+      - brgnet
+
+  # Service responsible for running the PostgreSQL database server
+  db:
+    build:
+      context: ./docker/postgres
+      dockerfile: Dockerfile
+      target: development-run-stage
+    container_name: prosin_db
+    env_file:
+      - ./envs/.db.env
+    volumes:
+      - ./docker/postgres/initdb:/docker-entrypoint-initdb.d/
+      - ./backups:/backups
+      - db_data:/var/lib/postgresql/data
+    networks:
+      - brgnet
+
+networks:
+  brgnet:
+    driver: bridge # Specifies the driver for the brgnet network.
+
+volumes:
+  db_data: {} # Defines the db_data volume.
+  api_staticfiles: {} # Defines the api_staticfiles volume.
+  api_mediafiles: {} # Defines the api_mediafiles volume.
+  pgadmin_data: {} # Define volume for pgAdmin
+  task-monitor_data: {} # Define volume for pgAdmin task-monitor

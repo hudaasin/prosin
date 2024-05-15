@@ -1,0 +1,36 @@
+## Building Powerful Web Applications with Django and Environment Variable Management
+django==4.2.8                           # A powerful web framework for building complex websites and web applications using Python.
+django-environ==0.11.2                  # A tool for managing environment variables in Django projects.
+
+# Authentication and Authorization Packages
+django-allauth==0.62.1                  # User authentication for Django.
+djangorestframework-simplejwt==5.3.1    # JSON Web Token authentication for Django REST framework.
+dj-rest-auth==6.0.0                     # Authentication and registration REST API for Django.
+
+## Enhancing Django Models with Dynamic Filters, Slugs, International Data Support, and Time Zone Management
+django-taggit==5.0.1                    # An application for Django projects, allowing users to assign and manage tags for objects in the database.
+django-filter==24.2                     # A tool for creating dynamic filters for data models in Django.
+django-autoslug==1.9.9                  # A package for automatically creating slugs for data model fields in Django.
+django-countries==7.6.1                 # A package providing country choices for use with Django forms and models.
+django-phonenumber-field==7.3.0         # A package for validating and storing international phone numbers in Django models.
+phonenumbers==8.13.35                   # A library for parsing, formatting, storing, and validating international phone numbers.
+pytz==2024.1                            # A Python library for working with time zones.
+
+## Enhancing Django RESTful APIs with Django Rest Framework, drf-yasg, and argon2-cffi
+djangorestframework==3.15.1             # A powerful framework for building RESTful web services in Django.
+drf-spectacular==0.27.2                 # A Swagger generation tool for Django REST framework API views.
+argon2-cffi==23.1.0                     # A Python binding for the Argon2 password hashing algorithm.
+
+## Managing CORS Policies with Django-cors-headers
+django-cors-headers==4.3.1              # A package for adding Cross-Origin Resource Sharing (CORS) support to Django projects.
+
+## Enhancing Image Processing in Python with Pillow Library
+Pillow==10.3.0                          # A Python Imaging Library for adding image processing capabilities to your Python interpreter.
+
+## Utilizing Redis with Python for High-Performance Data Storage
+redis==5.0.3                            # A Python client for Redis, a powerful in-memory data structure store.
+
+## Asynchronous Task Processing and Email Handling Dependencies
+celery==5.4.0                           # A distributed task queue for background job processing.
+flower==2.0.1                           # A web-based tool for monitoring and administrating Celery clusters.
+django-celery-email==3.0.0              # A Django email backend for asynchronous sending of emails using Celery.

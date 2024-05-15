@@ -1,0 +1,10 @@
+# Initialize the Django projcet
+message_welcome "Starting the requirements update process..."
+python "${workdir}/scripts/sources/update_requirements.py" >/dev/null &
+spinner "Please be patient. Updating requirements in progress. This may take a few minutes..."
+if [ $? -eq 0 ]; then
+    message_success "Requirements have been successfully updated." # Display success message
+else
+    message_error "An error occurred. The process was not completed. Please try again." # Display error message
+    exit 1
+fi

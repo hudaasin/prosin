@@ -1,0 +1,62 @@
+#!/usr/bin/env sh
+
+# This script sets up the PostgreSQL environment and waits for the database to become available.
+# It checks the database connection status using a Python script and waits until the database is ready.
+
+# Maximum number of attempts to connect to the database
+MAX_RETRIES=30
+
+# Exit script immediately if a command fails
+set -o errexit
+# Exit script when a command in a pipeline fails
+set -o pipefail
+# Exit script if it tries to use unset variables
+set -o nounset
+
+# Define the project and workdir directory
+workdir="$(cd "$(dirname "$0")" && pwd)" # Directory of the script
+project_dir=$(realpath "$workdir")       # Project directory
+
+# Source necessary files
+source "${workdir}/sources/_constants.sh" # Constants file
+source "${workdir}/sources/_messages.sh"  # Messages file
+source "${workdir}/sources/_utils.sh"     # Utilities file
+
+# Function to check if PostgreSQL is ready to accept connections
+postgres_ready() {
+    python <<END
+import sys
+import psycopg2
+try:
+    psycopg2.connect(
+        host="${POSTGRES_HOST}",
+        port="${POSTGRES_PORT}",
+        user="${POSTGRES_USER}",
+        password="${POSTGRES_PASSWORD}",
+        dbname="${POSTGRES_DB}"
+    )
+except psycopg2.OperationalError:
+    sys.exit(-1)
+sys.exit(0)
+END
+}
+
+RETRY_COUNT=0
+
+# Wait until PostgreSQL is ready to accept connections with a limit on retries
+until postgres_ready || [ $RETRY_COUNT -eq $MAX_RETRIES ]; do
+    message_info >&2 "Waiting for PostgreSQL to be available..."
+    sleep 1
+
+    RETRY_COUNT=$((RETRY_COUNT + 1))
+
+    # Check if maximum retries reached without successful connection
+    if [ $RETRY_COUNT -eq $MAX_RETRIES ]; then
+        message_error >&2 "Failed to connect to PostgreSQL after $MAX_RETRIES attempts. Exiting..."
+        exit 1
+    fi
+done
+
+# Once PostgreSQL is ready, execute the provided commands
+message_success >&2 "PostgreSQL is now available."
+exec "$@"

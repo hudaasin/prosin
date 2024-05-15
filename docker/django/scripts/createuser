@@ -1,0 +1,67 @@
+#!/usr/bin/env sh
+
+# This script is used to create a new user with a specified UID.
+# It provides the option to specify the username and UID as arguments.
+# If the username is not provided, a default username "prosin" is used.
+# The script checks if the user already exists and exits if the UID conflicts.
+# If the user does not exist, it creates a new user with the specified UID.
+
+# Define the project and workdir directory
+workdir="$(cd "$(dirname "$0")" && pwd)" # Get the directory of the script
+project_dir=$(realpath "$workdir")       # Get the project directory by going up zero level
+
+# Source the necessary files
+source "${workdir}/sources/_constants.sh" # Constants file
+source "${workdir}/sources/_messages.sh"  # Messages file
+source "${workdir}/sources/_utils.sh"     # Utilities file
+
+createuser() {
+    local username=""
+    local uid=""
+    local gid=""
+
+    # Process named arguments
+    while getopts "n:u:g:" opt; do
+        case ${opt} in
+        n) username=${OPTARG} ;;
+        u) uid=${OPTARG} ;;
+        g) gid=${OPTARG} ;;
+        *)
+            message_error "Invalid option: ${opt}"
+            exit 1
+            ;;
+        esac
+    done
+    shift $((OPTIND - 1))
+
+    # Check if required arguments are provided
+    if [[ -z "$uid" ]]; then
+        message_error "Usage: $0 -u <UID>"
+        exit 1
+    fi
+
+    # If gid is not provided, determine the default gid
+    if [[ -z "$gid" ]]; then
+        gid=$uid
+    fi
+
+    # If username is not provided, determine the default name
+    if [[ -z "$username" ]]; then
+        username=prosin
+    fi
+
+    # Check if the user already exists
+    if
+        id "$username" &
+        >/dev/null
+    then
+        if [ "$(id $username)" != "$uid" ]; then
+            message_error "User $username exists."
+            exit 1
+        fi
+    else
+        adduser -u $uid -G $gid --disabled-password $username
+    fi
+}
+
+createuser "$@"

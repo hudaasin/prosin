@@ -1,0 +1,14 @@
+-r base.txt
+
+## Database Connectivity
+psycopg2-binary==2.9.9  # PostgreSQL database adapter for Python
+
+## Code Quality and Formatting Tools
+isort==5.13.2           # Python utility for sorting imports
+flake8==7.0.0           # Python linting tool for enforcing coding standards
+Flake8-pyproject==1.2.3 # Plugin for Flake8 to support reading configuration from pyproject.toml
+black==24.3.0           # Python code formatter for consistent style
+
+colorlog==6.8.2         # Colored log output for better readability
+
+watchdog==2.1.9         # A library for monitoring file and directory changes in Python.

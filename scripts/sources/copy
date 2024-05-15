@@ -1,0 +1,16 @@
+#!/usr/bin/env bash
+
+copy() {
+    local service="${1}"
+    local source_path="${2}"
+    local dist_path="${3}"
+
+    if [ -z "${service}" ] || [ -z "${source_path}" ] || [ -z "${dist_path}" ]; then
+        message_error "Usage: $0 copy <service name> <source path> <destination path>"
+        exit 1
+    fi
+
+    docker compose cp "${source_path}" "${service}":"${dist_path}"
+}
+
+copy "$@"
